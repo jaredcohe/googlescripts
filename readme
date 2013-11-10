@@ -1,0 +1,4 @@
+So far:
+- calculates distance between addresses in cells
+- traces dependents - finds every other cell on the pages that relies on source cell for a formula
+
