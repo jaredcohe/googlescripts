@@ -6,9 +6,23 @@ function onOpen() {
   var spreadsheet = SpreadsheetApp.getActive();
   var menuItems = [
     {name: 'Generate step-by-step', functionName: 'generateStepByStep_'},
-    {name: 'Trace Dependents', functionName: 'traceDependents'}
+    {name: 'Trace Dependents', functionName: 'traceDependents'},
+    {name: 'Read Other File', functionName: 'readRows'},
+    {name: 'Sort', functionName: 'sortrange'}
   ];
   spreadsheet.addMenu("Jared's Custom Scripts", menuItems);
+}
+
+// Performs a saved sort with a button
+function sortrange() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var sheetCandidateList = spreadsheet.getSheetByName('CandidateList');
+  var lastRow = sheetCandidateList.getLastRow();
+  var lastColumn = sheetCandidateList.getLastColumn();
+  SpreadsheetApp.getUi().alert(lastRow);
+  SpreadsheetApp.getUi().alert(lastColumn);
+  var range = sheetCandidateList.getRange(2, 1, lastRow-1, lastColumn);
+  range.sort(2);
 }
 
 /**
@@ -181,13 +195,13 @@ function traceDependents(){
   var currentCell = spreadsheet.getActiveCell();
   var currentCellRef = currentCell.getA1Notation();
   var range = spreadsheet.getDataRange();
-  
+
   var regex = new RegExp("\\b" + currentCellRef + "\\b");
   var formulas = range.getFormulas();
-  
+
   for (var i = 0; i < formulas.length; i++){
     var row = formulas[i];
-    
+
     for (var j = 0; j < row.length; j++){
       var cellFormula = row[j];
       if (regex.test(cellFormula)){
@@ -195,7 +209,7 @@ function traceDependents(){
       }
     }
   }
-  
+
   var output = "Dependents: ";
   var dependentRefs = [];
   for (var k = 0; k < dependents.length; k++){
@@ -211,6 +225,72 @@ function traceDependents(){
   } else {
     output += " None";
   }
-  
+
   currentCell.setNote(output);
+}
+
+function readRows()
+{
+  // get data - https://docs.google.com/spreadsheet/ccc?key=0AlF-5fwPmkDodDNiYTU4QUFZZld6RFNNanQwU09MOXc#gid=0
+  var sheet = SpreadsheetApp.openById("0AlF-5fwPmkDodDNiYTU4QUFZZld6RFNNanQwU09MOXc")
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows();
+  var values = rows.getValues();
+
+  // write data
+  var ss = SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName("Sheet");
+
+  Logger.log(rows);
+  Logger.log(values);
+  Logger.log(numRows);
+  Logger.log(values[0][1]);
+
+  // https://developers.google.com/apps-script/reference/spreadsheet/range
+
+  var cell = sheet.getRange(2,2,3,4); // (row, column, height, width)
+  cell.setValue(values);
+
+  // cell.setValue(100);
+
+
+  // write data to log
+  for (var i = 0; i <= numRows - 1; i++) { var row = values[i]; Logger.log(row); }
+};
+
+function onEdit(event)
+{
+  // var range_active = event.source.getActiveSheet(); // if wanted this sheet
+  var sheet = SpreadsheetApp.getActive().getSheetByName("onEdit");
+  var cell = sheet.getRange(2,2);
+  var value = cell.getValue();
+  cell.setValue(value + 1);
+
+  // duplicates any change into cell E1, puts row and col in E2, E3
+  sheet.getRange(1,5).setValue(event.source.getActiveRange().getValue());
+  sheet.getRange(2,5).setValue(event.source.getActiveRange().getRow());
+  sheet.getRange(3,5).setValue(event.source.getActiveRange().getColumn());
+
+  var last_column_edited = event.source.getActiveRange().getColumn();
+  var range_last_column_edited = sheet.getRange(1, last_column_edited, sheet.getMaxRows(), 1).getA1Notation();
+  sheet.getRange(4,5).setValue(range_last_column_edited);
+  // sheet.getRange(5,5).setValue(sheet.getMaxRows());
+
+  // Browser.msgBox(sheet.getRange(1, last_column_edited, sheet.getMaxRows(), 1).getValues());
+
+  sheet.getRange(1,8).setValue(sheet.getRange(1, last_column_edited, sheet.getMaxRows(), 1).getValue());
+
+}
+
+// http://webapps.stackexchange.com/questions/53555/google-sheets-how-can-i-use-row-values-to-index-into-another-sheet
+function dataSubset(data,subset) {
+  var output = [];
+  for(var i=0, iLen=subset.length; i<iLen; i++) {
+    for(var j=1, jLen=data.length+1; j<jLen; j++) {
+      if(parseInt(subset[i]) == parseInt(j)) {
+        output.push(data[j-1]);
+      }
+    }
+  }
+  return output;
 }
