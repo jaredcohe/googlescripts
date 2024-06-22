@@ -292,3 +292,18 @@ function dataSubset(data,subset) {
   }
   return output;
 }
+
+// Google Script to Add 5 New Rows to a Sheet
+function addRow() {
+  // Get the sheet
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+  // Copy down columns C-F starting with the last row
+  var lastRow = sheet.getLastRow();
+  var rangeColumns = [ ["C", "F"], ["J", "L"], ["P", "R"] ];
+
+  for (var i = 0; i < rangeColumns.length; i++) {
+    var range = sheet.getRange(rangeColumns[i][0] + lastRow + ":" + rangeColumns[i][1] + lastRow);
+    range.copyTo(sheet.getRange(rangeColumns[i][0] + (lastRow + 1) + ":" + rangeColumns[i][1] + (lastRow + 5)));
+  }
+}
